@@ -61,12 +61,12 @@ class Admin(commands.Cog):
             await ctx.send('\N{OK HAND SIGN}')
 
     @commands.command(name='reload', hidden=True)
-    @commands.has_any_role('Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin')
+    @commands.has_any_role('Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin','Shadow Staff')
     async def _reload(self, ctx, *, module):
         """Reloads a module."""
         if not module.startswith('cogs.'):
             module = f'cogs.{module}'
-        if not await self.can_run_command(ctx.author.roles, ['Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators']):
+        if not await self.can_run_command(ctx.author.roles, ['Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators','Shadow Staff']):
             await ctx.send("{author} You aren't authorized to do that.".format(author=ctx.author.mention))
             return
         try:
@@ -125,7 +125,7 @@ class Admin(commands.Cog):
             await ctx.send(f"Sent by: {ctx.author.name}\n{user.mention} {excuse['message']}")
         await ctx.message.delete()
 
-    @commands.command(aliases=['latency', 'trace', 'tr'])
+    @commands.command(aliases=['latency', 'trace', 'tr', 'tracert', 'traceroute', 'traces', 'lg', 'guru'])
     @commands.has_any_role('Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin', 'Shadow Staff')
     async def _latency(self, ctx, user: typing.Optional[discord.Member] = None):
         text = '''***Running a traceroute to/from Shadow***
@@ -154,11 +154,7 @@ but there are comparable commands for other OSes**
     d. Wait up to 2 minutes for the test to complete
     e. Take a screenshot of the results Windows + Shift + S or using your preferred screenshot tool
     f. Send to a Shadow Guru or Moderator'''
-        if user is None:
-            await(ctx.send(text))
-        else:
-            await ctx.send(f"From: {ctx.author.name}\nTo: {user.mention}\n{text}")
-        await ctx.message.delete()
+        await self.bot.general.text_command_process(ctx, user, text, "latency")
 
     @commands.command(aliases=['slo', 'sm'])
     @commands.has_any_role('Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin', 'Shadow Staff')
@@ -182,20 +178,22 @@ but there are comparable commands for other OSes**
 
     @commands.command(name='ar')
     @commands.has_any_role('Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin', 'Shadow Staff')
-    async def add_role(self, ctx, user: discord.Member, *,  role: typing.Optional[discord.Role] = None):
+    async def add_role(self, ctx, user: discord.Member, *,  roles: commands.Greedy[discord.Role] = None):
         """Adds a role to a User default is Shadowers."""
+        if roles is None:
+            roles = list()
+            roles.append(ctx.guild.get_role(461298541978058769))
         if await self.can_run_command(ctx.author.roles, ['Shadow Guru', 'Community Manager', 'Head of Community', 'Shadow Support Lead', 'Shadow Customer Support', 'Moderators', 'Admin', 'Shadow Staff']):
-            if role is None:
-                role = ctx.guild.get_role(461298541978058769)
-            if user is None:
-                await ctx.send(f"{ctx.author.mention} User is a required parameter.")
-            else:
-                if role not in user.roles:
-                    await user.add_roles(role)
-                    await ctx.message.add_reaction('✅')
-                    await user.send(f"{user.mention} You have been granted the role {role.name} by {ctx.author}")
+            for role in roles:
+                if user is None:
+                    await ctx.send(f"{ctx.author.mention} User is a required parameter.")
                 else:
-                    await ctx.send(f"{ctx.author.mention} User {user.mention} appears to already have the {role.name} role.")
+                    if role not in user.roles:
+                        await user.add_roles(role)
+                        await ctx.message.add_reaction('✅')
+                        await user.send(f"{user.mention} You have been granted the role {role.name} by {ctx.author}")
+                    else:
+                        await ctx.send(f"{ctx.author.mention} User {user.mention} appears to already have the {role.name} role.")
         else:
             await ctx.send("{author} You aren't authorized to do that.".format(author=ctx.author.mention))
 
